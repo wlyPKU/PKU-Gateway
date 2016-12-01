@@ -1,0 +1,18 @@
+﻿{
+  "name": "PKU Gateway",
+  "version": "2.0.0",
+  "manifest_version": 2,
+  "description": "北京大学网关插件 2.0",
+  "icons": {
+    "16": "public/img/icon16.png",
+    "48": "public/img/icon48.png",
+    "128": "public/img/icon128.png"
+  },
+  "browser_action": {
+    "default_icon": "public/img/icon19.png",
+    "default_popup": "popup/index.html"
+  },
+  "permissions": [
+    "https://its.pku.edu.cn/*"
+  ]
+}
