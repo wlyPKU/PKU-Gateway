@@ -23,7 +23,7 @@ window.onload = function() {
 };
 
 function update_state() {
-    state.innerHTML = localStorage.state;
+    state.innerHTML = "<div style='text-align:center' >"+localStorage.state+"</div>";
 }
 
 function ipgwclient(operation) {
@@ -33,7 +33,7 @@ function ipgwclient(operation) {
     req = new XMLHttpRequest();
     req.timeout = 7000;
 	var requestContent = "https://its.pku.edu.cn/cas/ITSClient?" + "username=" + localStorage.user + "&password=" + localStorage.passwd + "&cmd=" + operation + "&iprange=free"
-	req.open("POST", requestContent, "true");   
+	req.open("GET", requestContent, "true");   
 	req.onload = connect_callback;
     req.ontimeout = error_timeout;
     req.onabort = error_abort;
@@ -145,27 +145,19 @@ function connect_callback() {
     update_state();
 }
 
-function get_default_string(info) {
-    var text = "";
-    for (var key in info) {
-        var value = info[key];
-        if (mappings[key]) key = mappings[key];
-        if (mappings[value]) value = mappings[value];
-        text = text + key + ":" + value + "； ";
-    }
-    return text;
-}
-
 function error_timeout(evt) {
     localStorage.state = "网络连接超时(" + evt.type + ")";
+	update_state();
 }
 
 function error_abort(evt) {
     localStorage.state = "网络中断(" + evt.type + ")";
+	update_state();
 }
 
 function error_error(evt) {
     localStorage.state = "网络连接错误(" + evt.type + ")";
+	update_state();
 }
 
 function bindonclick(btname, szstate) {
