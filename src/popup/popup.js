@@ -1,6 +1,23 @@
 ﻿//author: wangly
 
-var user, passwd, operation, state;
+var user, passwd, operation, state, 
+	mappings = {
+        SUCCESS: "状态",
+        IP: "IP",
+        CONNECTIONS: "连接数",
+        REASON: "原因",
+        STATE: "状态",
+        USERNAME: "用户",
+        SCOPE: "访问范围",
+        FIXRATE: "是否包月",
+        DEFICIT: "余额不足",
+        BALANCE: "余额",
+        MESSAGE: "备注",
+        domestic: "免费地址",
+        international: "收费地址",
+        YES: "是",
+        NO: "否"
+    };
 
 window.onload = function() {
     user = localStorage.user;
@@ -15,10 +32,10 @@ window.onload = function() {
         'click', reset_options);
 	localStorage.state = "";
 	update_state();
-    bindonclick('open', "正在连接到免费...");
-    bindonclick('getconnections', "查看连接...");
-    bindonclick('close', "正在断开...");
-	bindonclick('closeall', "正在断开全部连接...");
+    bindonclick('connect', "正在连接到免费...");
+    bindonclick('getconnections', "暂不提供...");
+    bindonclick('disconnect', "正在断开...");
+	bindonclick('disconnectall', "正在断开全部连接...");
     update_state();
 };
 
@@ -32,7 +49,7 @@ function ipgwclient(operation) {
     var range = 1, oper;
     req = new XMLHttpRequest();
     req.timeout = 7000;
-	var requestContent = "https://its.pku.edu.cn/cas/ITSClient?" + "username=" + localStorage.user + "&password=" + localStorage.passwd + "&cmd=" + operation + "&iprange=free"
+	var requestContent = "https://its.pku.edu.cn:5428/ipgatewayofpku?" + "uid=" + localStorage.user + "&password=" + localStorage.passwd + "&timeout=1&operation=" + operation + "&range=1"
 	req.open("GET", requestContent, "true");   
 	req.onload = connect_callback;
     req.ontimeout = error_timeout;
@@ -47,11 +64,19 @@ function toJson(str){
 
 //connect result
 function connect_callback() {
-    var info = toJson(req.responseText),
-        text = "";
-    if (info.succ != undefined) {
+    var infos = req.responseText.split("<!--IPGWCLIENT_START ")[1].split(" IPGWCLIENT_END-->")[0].split(" "),
+        icon = "icon.ico", text = "", connect_info = [];
+    for (i = 0; i < infos.length; i++) {
+        tmp = infos[i].split("=");
+        if (tmp[0].trim() && tmp[1].trim())
+            connect_info[tmp[0]] = tmp[1];
+    }
+	if(connect_info.FR_DESC_CN == "90元不限时包月"){
+		connect_info.TOTAL_TIME = "不限时间"
+	}
+    if (connect_info.SUCCESS == "YES") {
         switch (cur_operation) {
-            case "open":
+            case "connect":
 				localStorage.state = "网络连接成功";
 				text = "<div class=\"its_article response_style\"> \
 						<div align=\"CENTER\">\
@@ -63,8 +88,9 @@ function connect_callback() {
 									</tr>\
 									<tr><td>\
 										<table noborder=\"\">\
-										<tr><td align=\"right\">当前地址：</td><td align=\"left\">"+info.IP+"</td></tr>\
-										<tr><td align=\"right\">账户余额：</td><td align=\"left\">"+info.BALANCE_CN+"</span> 元</td></tr>\
+										<tr><td align=\"right\">当前地址：</td><td align=\"left\">"+connect_info.IP+"</td></tr>\
+										<tr><td align=\"right\">账户余额：</td><td align=\"left\">"+connect_info.BALANCE+"</span> 元</td></tr>\
+										<tr><td align=\"right\">当前连接：</td><td align=\"left\">"+connect_info.CONNECTIONS+"</span></td></tr>\
 						</tbody></table></td></tr></tbody></table></td></tr></tbody></table>\
 						</div>\
 						</div>";
@@ -111,7 +137,7 @@ function connect_callback() {
 				text += "</tbody></table></div></div>";
 				localStorage.state = text;
                 break;
-            case "close":
+            case "disconnect":
 				text = "<div class=\"its_article response_style\"> \
 						<div align=\"CENTER\">\
 						<table class=\"ipgw\" cellpadding=\"16\" cellspacing=\"2\">\
@@ -124,7 +150,7 @@ function connect_callback() {
 						</div>";
 				localStorage.state = text;
                 break;
-			case "closeall":
+			case "disconnectall":
 				text = "<div class=\"its_article response_style\"> \
 						<div align=\"CENTER\">\
 						<table class=\"ipgw\" cellpadding=\"16\" cellspacing=\"2\">\
@@ -140,7 +166,7 @@ function connect_callback() {
 		}
 	}		
 	else {
-		localStorage.state = "网络连接失败<br>原因：" + info.error;                
+		localStorage.state = "网络连接失败<br>原因：" + connect_info.REASON;                
 	}
     update_state();
 }
